@@ -1,0 +1,47 @@
+# R specific
+.Rhistory
+.Rdata
+.RData
+.httr-oauth
+.Rproj.user/
+*.Rproj
+
+# Package specific
+src/*.o
+src/*.so
+src/*.dll
+inst/doc
+vignettes/*.html
+vignettes/*.pdf
+^_pkgdown\.yml$
+docs/
+^\.lintr$
+^\.github$
+
+# Data files (大文件)
+*.rds
+*.RData
+*.csv
+*.txt
+*.tsv
+
+# 结果文件
+results/
+figures/
+*.png
+*.jpg
+*.pdf
+
+# IDE文件
+.vscode/
+.Rprofile
+.Renviron
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*~
+*.swp
+*.tmp
