@@ -1,0 +1,31 @@
+Package: fdrregGenomics
+Type: Package
+Title: Genomics-Integrated False Discovery Rate Regression Pipeline
+Version: 0.1.0
+Authors@R: person("Jinghong", "Qiu",
+                   role = c("aut", "cre"),
+                   email = "1155132472@link.cuhk.edu.hk")
+Description: A comprehensive pipeline for integrating GWAS summary statistics
+    with biological annotations using False Discovery Rate Regression (FDRreg).
+    Supports SNP-level, MAGMA gene-level, and TWAS (S-PrediXcan / S-MultiXcan)
+    analyses with optional sample-overlap decorrelation and variable selection.
+    The underlying FDRreg algorithm is developed by Scott et al. (2016, JASA).
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends:
+    R (>= 3.5.0)
+Imports:
+    FDRreg,
+    powerplus,
+    glmnet,
+    HelpersMG,
+    stats,
+    utils
+Suggests:
+    data.table,
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+VignetteBuilder: knitr

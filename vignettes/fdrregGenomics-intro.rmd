@@ -1,0 +1,290 @@
+---
+title: "Getting Started with fdrregGenomics"
+author: "Jinghong Qiu"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with fdrregGenomics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4
+)
+```
+
+## Overview
+
+**fdrregGenomics** provides a comprehensive pipeline for integrating GWAS
+summary statistics with biological annotations using False Discovery Rate
+Regression (FDRreg). It supports three genomic levels:
+
+| Tier | Function | Description |
+|------|----------|-------------|
+| SNP | `run_fdrreg_snp()` | SNP-level GWAS with LDSC decorrelation |
+| MAGMA Gene | `run_fdrreg_magma_gene()` | MAGMA gene-level results |
+| TWAS | `run_fdrreg_twas()` | S-PrediXcan / S-MultiXcan results |
+
+### Disclaimer / Attribution
+
+> **The underlying FDRreg algorithm is developed by Scott et al. (2016);
+> this package provides the comprehensive genomics integration,
+> preprocessing, and validation workflow.**
+
+### References
+
+Scott, J. G., Kelly, R. C., Smith, M. A., Zhou, P., & Kass, R. E. (2016).
+False discovery rate regression: an application to neural synchrony
+detection in primary visual cortex.
+*Journal of the American Statistical Association*, 110(510), 459-471.
+
+---
+
+## Installation
+
+```{r install, eval = FALSE}
+# Install from local source or GitHub
+# install.packages("fdrregGenomics")
+```
+
+## Simulated Example Data
+
+We use `simulate_example_data()` to create realistic simulated datasets.
+
+```{r simulate}
+library(fdrregGenomics)
+
+sim <- simulate_example_data(
+  n_snps   = 2000,
+  n_genes  = 200,
+  n_aux    = 3,
+  n_annot  = 10,
+  prop_signal = 0.03,
+  seed = 42
+)
+
+cat("Target GWAS SNPs:", nrow(sim$snp_target), "\n")
+cat("Auxiliary traits:", names(sim$snp_aux), "\n")
+cat("Overlapping traits:", sim$overlap_traits, "\n")
+cat("Annotations:", ncol(sim$annotations) - 1, "columns\n")
+```
+
+---
+
+## Example 1: SNP-Level Analysis
+
+### Basic SNP Pipeline (with Sample-Overlap Decorrelation)
+
+```{r snp_basic}
+result_snp <- run_fdrreg_snp(
+  target          = sim$snp_target,
+  aux             = sim$snp_aux,
+  overlap_traits  = sim$overlap_traits,
+  ldsc_intercepts = sim$ldsc_intercepts,
+  id_col          = "snpid",
+  z_col           = "z",
+  p_col           = "pval",
+  feature_transform = "signed",
+  var_select      = "none",
+  fdrreg_nulltype = "both",
+  seed            = 42
+)
+
+# Print the result
+print(result_snp)
+```
+
+### Access Significant Findings
+
+```{r snp_sig}
+sig_theo <- significant(result_snp, threshold = 0.05, type = "theoretical")
+cat("Significant SNPs (theoretical, FDR < 0.05):", nrow(sig_theo), "\n")
+
+head(sig_theo)
+```
+
+### Full Results Table
+
+```{r snp_full}
+full <- result_snp$full_results
+cat("Columns:", paste(colnames(full), collapse = ", "), "\n")
+cat("Dimensions:", nrow(full), "x", ncol(full), "\n")
+```
+
+### With LASSO Variable Selection
+
+```{r snp_lasso}
+result_lasso <- run_fdrreg_snp(
+  target          = sim$snp_target,
+  aux             = sim$snp_aux,
+  overlap_traits  = sim$overlap_traits,
+  ldsc_intercepts = sim$ldsc_intercepts,
+  annotations     = sim$annotations,
+  feature_transform = "signed",
+  var_select      = "lasso",
+  seed            = 42
+)
+
+print(result_lasso)
+```
+
+### With Biological Annotations Only
+
+```{r snp_annot}
+result_ann <- run_fdrreg_snp(
+  target      = sim$snp_target,
+  annotations = sim$annotations,
+  feature_transform = "signed",
+  var_select  = "none",
+  seed        = 42
+)
+
+print(result_ann)
+```
+
+### Using Pre-Built Covariance Matrix
+
+```{r snp_covmat}
+result_cov <- run_fdrreg_snp(
+  target         = sim$snp_target,
+  aux            = sim$snp_aux,
+  overlap_traits = sim$overlap_traits,
+  cov_matrix     = sim$cov_matrix,   # instead of ldsc_intercepts
+  feature_transform = "signed",
+  seed           = 42
+)
+
+summary(result_cov)
+```
+
+---
+
+## Example 2: MAGMA Gene-Level Analysis
+
+```{r magma}
+result_magma <- run_fdrreg_magma_gene(
+  target            = sim$magma_target,
+  aux               = sim$magma_aux,
+  annotations       = sim$gene_annotations,
+  id_col            = "GENE",
+  z_col             = "ZSTAT",
+  p_col             = "P",
+  feature_transform = "abs",
+  var_select        = "lasso",
+  fdrreg_nulltype   = "both",
+  seed              = 42
+)
+
+print(result_magma)
+
+# Significant genes
+sig_genes <- significant(result_magma, threshold = 0.05)
+cat("Significant genes:", nrow(sig_genes), "\n")
+```
+
+---
+
+## Example 3: TWAS Analysis
+
+### S-PrediXcan
+
+```{r twas_predi}
+result_predi <- run_fdrreg_twas(
+  target          = sim$spredixcan_target,
+  twas_type       = "spredixcan",
+  aux             = sim$spredixcan_aux,
+  annotations     = sim$gene_annotations,
+  feature_transform = "abs",
+  var_select      = "elasticnet",
+  seed            = 42
+)
+
+print(result_predi)
+```
+
+### S-MultiXcan
+
+```{r twas_multi}
+result_multi <- run_fdrreg_twas(
+  target          = sim$smultixcan_target,
+  twas_type       = "smultixcan",
+  aux             = sim$smultixcan_aux,
+  annotations     = sim$gene_annotations,
+  feature_transform = "abs",
+  var_select      = "lasso",
+  seed            = 42
+)
+
+print(result_multi)
+```
+
+---
+
+## Example 4: Unified Dispatcher
+
+```{r unified}
+# The run_fdrreg() function dispatches to the appropriate wrapper
+result <- run_fdrreg(
+  tier = "twas",
+  target    = sim$spredixcan_target,
+  twas_type = "spredixcan",
+  aux       = sim$spredixcan_aux,
+  seed      = 42
+)
+
+summary(result)
+```
+
+---
+
+## Comparing Variable Selection Methods
+
+```{r comparison, eval = FALSE}
+methods <- c("none", "lasso", "marginal", "elasticnet")
+
+results_list <- lapply(methods, function(m) {
+  run_fdrreg_snp(
+    target          = sim$snp_target,
+    aux             = sim$snp_aux,
+    overlap_traits  = sim$overlap_traits,
+    ldsc_intercepts = sim$ldsc_intercepts,
+    feature_transform = "signed",
+    var_select      = m,
+    seed            = 42
+  )
+})
+names(results_list) <- methods
+
+# Compare discoveries at FDR < 0.05
+sapply(results_list, function(r) {
+  sum(r$full_results$fdr_theo < 0.05, na.rm = TRUE)
+})
+```
+
+---
+
+## Understanding the Output Object
+
+The `fdrreg_result` S3 object contains:
+
+| Slot | Description |
+|------|-------------|
+| `$tier` | Analysis tier (snp, magma_gene, twas_*) |
+| `$full_results` | Data frame: id, z, p, fdr_theo, lfdr_theo, fdr_emp, lfdr_emp, pep_* |
+| `$summary` | Data frame: discovery counts at standard FDR thresholds |
+| `$assessment` | Data frame: feature beta, SE, z-score, p-value from model |
+| `$models` | List of fitted FDRreg model objects |
+| `$varselect_model` | Variable selection model (or NULL) |
+| `$covariates_used` | Character vector of feature names used |
+| `$params` | Reproducibility: seed, R version, package versions, timestamp |
+
+```{r output_demo}
+names(result_snp)
+result_snp$summary
+result_snp$params
+```
