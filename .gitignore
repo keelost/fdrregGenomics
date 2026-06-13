@@ -18,30 +18,30 @@ docs/
 ^\.lintr$
 ^\.github$
 
-# Data files (大文件)
+# Data files (big files)
 *.rds
 *.RData
 *.csv
 *.txt
 *.tsv
 
-# 结果文件
+# Results and figures
 results/
 figures/
 *.png
 *.jpg
 *.pdf
 
-# IDE文件
+# IDE specific
 .vscode/
 .Rprofile
 .Renviron
 
-# 系统文件
+# System files
 .DS_Store
 Thumbs.db
 
-# 临时文件
+# Temporary files
 *~
 *.swp
 *.tmp
