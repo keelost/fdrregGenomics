@@ -15,6 +15,7 @@ run_fdrreg_snp(
   id_col = "snpid",
   z_col = "z",
   p_col = "pval",
+  annot_id_col = NULL,
   ldsc_col = list(trait1 = "trait1", trait2 = "trait2", intercept = "intercept"),
   feature_transform = c("signed", "abs", "split"),
   var_select = c("none", "lasso", "marginal", "elasticnet"),
@@ -47,6 +48,10 @@ have sample overlap with the target.}
 
 \item{p_col}{Character, p-value column (default "pval").}
 
+\item{annot_id_col}{Character, ID column name in \code{annotations}.
+Defaults to \code{id_col}. Useful when annotations use a different
+ID column name (e.g., "snpid" vs "SNP").}
+
 \item{ldsc_col}{Named list: trait1, trait2, intercept column names.}
 
 \item{feature_transform}{Character, "signed" (default), "abs", or "split".}
@@ -67,18 +72,4 @@ An object of class \code{fdrreg_result}.
 \description{
 Performs FDRreg on SNP-level GWAS summary statistics with optional
 sample-overlap decorrelation, biological annotations, and variable selection.
-}
-\examples{
-\dontrun{
-sim <- simulate_example_data(n_snps = 2000, seed = 42)
-result <- run_fdrreg_snp(
-  target = sim$snp_target,
-  aux = sim$snp_aux,
-  overlap_traits = sim$overlap_traits,
-  ldsc_intercepts = sim$ldsc_intercepts
-)
-print(result)
-significant(result, threshold = 0.05)
-}
-
 }

@@ -42,18 +42,52 @@ transform_features <- function(feat_matrix, transform = c("signed", "abs", "spli
 }
 
 #' Build Combined Feature Matrix
+#'
+#' Combines auxiliary and annotation features. Automatically removes
+#' constant (zero-variance) columns that would cause FDRreg to fail.
+#'
 #' @param aux_features Numeric matrix or NULL.
 #' @param annotations Numeric matrix or NULL.
-#' @return Numeric matrix.
+#' @return Numeric matrix with constant columns removed.
 #' @noRd
 build_combined_features <- function(aux_features = NULL, annotations = NULL) {
   parts <- list()
-  if (!is.null(aux_features) && ncol(aux_features) > 0) parts[["aux"]] <- aux_features
-  if (!is.null(annotations) && ncol(annotations) > 0) parts[["annot"]] <- annotations
+  if (!is.null(aux_features) && ncol(aux_features) > 0)
+    parts[["aux"]] <- aux_features
+  if (!is.null(annotations) && ncol(annotations) > 0)
+    parts[["annot"]] <- annotations
+
   if (length(parts) == 0) {
-    stop("No features provided. Supply 'aux' or 'annotations'.", call. = FALSE)
+    stop("No features provided. Supply 'aux' and/or 'annotations'.",
+         call. = FALSE)
   }
+
   result <- do.call(cbind, parts)
+
+  # Replace NA / Inf with 0
   result[!is.finite(result)] <- 0
+
+  # Remove constant (zero-variance) columns — these cause FDRreg to fail
+  col_sds <- apply(result, 2, function(col) sd(col, na.rm = TRUE))
+  constant_idx <- which(col_sds == 0 | is.na(col_sds))
+
+  if (length(constant_idx) > 0) {
+    warning(
+      sprintf(
+        "[features] Removing %d constant/zero-variance column(s): %s",
+        length(constant_idx),
+        paste(colnames(result)[constant_idx], collapse = ", ")
+      ),
+      call. = FALSE
+    )
+    result <- result[, -constant_idx, drop = FALSE]
+  }
+
+  if (ncol(result) == 0) {
+    stop("No valid features remaining after removing constant columns.\n",
+         "  → Check that your auxiliary data and annotations contain non-zero values.",
+         call. = FALSE)
+  }
+
   result
 }

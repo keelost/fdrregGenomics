@@ -11,6 +11,7 @@ run_fdrreg_magma_gene(
   id_col = "GENE",
   z_col = "ZSTAT",
   p_col = "P",
+  annot_id_col = NULL,
   feature_transform = c("abs", "signed", "split"),
   var_select = c("none", "lasso", "marginal", "elasticnet"),
   fdrreg_nulltype = c("both", "theoretical", "empirical"),
@@ -31,6 +32,10 @@ run_fdrreg_magma_gene(
 
 \item{p_col}{Character, p-value column (default "P").}
 
+\item{annot_id_col}{Character, ID column in annotations (default NULL
+= same as \code{id_col}). Use when annotations use a different ID
+column name (e.g., "gene" vs "GENE").}
+
 \item{feature_transform}{Character, "abs" (default), "signed", "split".}
 
 \item{var_select}{Character, "none" (default), "lasso", "marginal", "elasticnet".}
@@ -39,21 +44,11 @@ run_fdrreg_magma_gene(
 
 \item{fdrreg_method}{Character, "pr" (default).}
 
-\item{seed}{Integer, random seed.}
+\item{seed}{Integer.}
 }
 \value{
 An object of class \code{fdrreg_result}.
 }
 \description{
 Run FDRreg at the MAGMA Gene Level
-}
-\examples{
-\dontrun{
-sim <- simulate_example_data(n_genes = 200, seed = 42)
-result <- run_fdrreg_magma_gene(
-  target = sim$magma_target, aux = sim$magma_aux,
-  annotations = sim$gene_annotations
-)
-print(result)
-}
 }

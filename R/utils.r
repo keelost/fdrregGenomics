@@ -58,26 +58,64 @@ match_and_align <- function(target, aux_list, id_col) {
 }
 
 #' Align Annotations to Target IDs
-#' @param target_ids Character vector.
-#' @param annotations Data frame.
-#' @param id_col Character.
+#'
+#' Supports different ID column names in target vs annotations via
+#' the \code{annot_id_col} parameter. Falls back to case-insensitive
+#' matching if the exact column is not found.
+#'
+#' @param target_ids Character vector of target IDs.
+#' @param annotations Data frame of annotations.
+#' @param id_col Character, ID column name used in target.
+#' @param annot_id_col Character, ID column name in annotations.
+#'   Defaults to \code{id_col}. If not found, tries case-insensitive match.
 #' @return Numeric matrix or NULL.
 #' @noRd
-align_annotations <- function(target_ids, annotations, id_col) {
+align_annotations <- function(target_ids, annotations, id_col,
+                              annot_id_col = NULL) {
   if (is.null(annotations)) return(NULL)
-  annot_ids <- as.character(annotations[[id_col]])
+
+  # Resolve annotation ID column
+  if (is.null(annot_id_col)) annot_id_col <- id_col
+
+  if (!annot_id_col %in% colnames(annotations)) {
+    # Case-insensitive fallback
+    lower_cols   <- tolower(colnames(annotations))
+    lower_target <- tolower(annot_id_col)
+    idx <- which(lower_cols == lower_target)
+    if (length(idx) > 0) {
+      annot_id_col <- colnames(annotations)[idx[1]]
+      message(sprintf(
+        "[align_annotations] Annotation ID column '%s' not found; using '%s' (case-insensitive match).",
+        id_col, annot_id_col
+      ))
+    } else {
+      stop(sprintf(
+        "Annotation ID column '%s' not found.\nAvailable columns: %s",
+        annot_id_col, paste(colnames(annotations), collapse = ", ")
+      ), call. = FALSE)
+    }
+  }
+
+  annot_ids <- as.character(annotations[[annot_id_col]])
   idx <- match(target_ids, annot_ids)
   na_count <- sum(is.na(idx))
+
   if (na_count > 0) {
-    message(sprintf("[align_annotations] %d IDs have no annotation; filled with 0.",
-                    na_count))
+    message(sprintf(
+      "[align_annotations] %d / %d target IDs have no matching annotation; filled with 0.",
+      na_count, length(target_ids)
+    ))
   }
+
+  # Keep only numeric columns (excluding the ID column)
   numeric_cols <- names(annotations)[sapply(annotations, is.numeric)]
-  numeric_cols <- setdiff(numeric_cols, id_col)
+  numeric_cols <- setdiff(numeric_cols, annot_id_col)
+
   if (length(numeric_cols) == 0) {
     warning("No numeric annotation columns found.", call. = FALSE)
     return(NULL)
   }
+
   annot_mat <- as.matrix(annotations[match(target_ids, annot_ids),
                                      numeric_cols, drop = FALSE])
   annot_mat[is.na(annot_mat)] <- 0

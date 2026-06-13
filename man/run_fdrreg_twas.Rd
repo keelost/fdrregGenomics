@@ -12,6 +12,7 @@ run_fdrreg_twas(
   id_col = "gene",
   z_col = "zscore",
   p_col = "pvalue",
+  annot_id_col = NULL,
   feature_transform = c("abs", "signed", "split"),
   var_select = c("none", "lasso", "marginal", "elasticnet"),
   fdrreg_nulltype = c("both", "theoretical", "empirical"),
@@ -34,6 +35,8 @@ run_fdrreg_twas(
 
 \item{p_col}{Character (default "pvalue").}
 
+\item{annot_id_col}{Character, ID column in annotations (default NULL).}
+
 \item{feature_transform}{Character, "abs" (default), "signed", "split".}
 
 \item{var_select}{Character, "none" (default), "lasso", "marginal", "elasticnet".}
@@ -49,13 +52,4 @@ An object of class \code{fdrreg_result}.
 }
 \description{
 Run FDRreg on TWAS Results (S-PrediXcan / S-MultiXcan)
-}
-\examples{
-\dontrun{
-sim <- simulate_example_data(n_genes = 200, seed = 42)
-result <- run_fdrreg_twas(
-  target = sim$spredixcan_target, twas_type = "spredixcan",
-  aux = sim$spredixcan_aux
-)
-}
 }

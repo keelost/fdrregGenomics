@@ -22,6 +22,5 @@ significant(x, threshold = 0.05, type = c("theoretical", "empirical"), ...)
 A data frame of significant findings.
 }
 \description{
-Returns rows from the full results table where FDR is below
-the specified threshold.
+Extract Significant Findings
 }

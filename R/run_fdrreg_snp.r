@@ -16,6 +16,9 @@
 #' @param id_col Character, SNP ID column (default "snpid").
 #' @param z_col Character, z-score column (default "z").
 #' @param p_col Character, p-value column (default "pval").
+#' @param annot_id_col Character, ID column name in \code{annotations}.
+#'   Defaults to \code{id_col}. Useful when annotations use a different
+#'   ID column name (e.g., "snpid" vs "SNP").
 #' @param ldsc_col Named list: trait1, trait2, intercept column names.
 #' @param feature_transform Character, "signed" (default), "abs", or "split".
 #' @param var_select Character, "none" (default), "lasso", "marginal",
@@ -26,19 +29,6 @@
 #' @param seed Integer, random seed (default 42).
 #'
 #' @return An object of class \code{fdrreg_result}.
-#'
-#' @examples
-#' \dontrun{
-#' sim <- simulate_example_data(n_snps = 2000, seed = 42)
-#' result <- run_fdrreg_snp(
-#'   target = sim$snp_target,
-#'   aux = sim$snp_aux,
-#'   overlap_traits = sim$overlap_traits,
-#'   ldsc_intercepts = sim$ldsc_intercepts
-#' )
-#' print(result)
-#' significant(result, threshold = 0.05)
-#' }
 #'
 #' @export
 run_fdrreg_snp <- function(target,
@@ -51,6 +41,7 @@ run_fdrreg_snp <- function(target,
                            id_col = "snpid",
                            z_col = "z",
                            p_col = "pval",
+                           annot_id_col = NULL,
                            ldsc_col = list(trait1 = "trait1",
                                            trait2 = "trait2",
                                            intercept = "intercept"),
@@ -61,9 +52,10 @@ run_fdrreg_snp <- function(target,
                                                "empirical"),
                            fdrreg_method = "pr",
                            seed = 42) {
+
   feature_transform <- match.arg(feature_transform)
-  var_select <- match.arg(var_select)
-  fdrreg_nulltype <- match.arg(fdrreg_nulltype)
+  var_select        <- match.arg(var_select)
+  fdrreg_nulltype   <- match.arg(fdrreg_nulltype)
   call <- match.call()
 
   # Step 0: Validate
@@ -74,17 +66,16 @@ run_fdrreg_snp <- function(target,
 
   # Step 1: Align
   aligned <- match_and_align(target, aux, id_col)
-  target <- aligned$target
-  aux <- aligned$aux
-  n_snps <- nrow(target)
-  message(sprintf("[run_fdrreg_snp] %d SNPs after alignment.", n_snps))
+  target  <- aligned$target
+  aux     <- aligned$aux
+  message(sprintf("[run_fdrreg_snp] %d SNPs after alignment.", nrow(target)))
 
   # Step 2: Separate overlap / no-overlap
-  all_aux_names <- names(aux)
+  all_aux_names   <- names(aux)
   if (is.null(overlap_traits)) overlap_traits <- character(0)
   no_overlap_names <- setdiff(all_aux_names, overlap_traits)
-  overlap_list <- aux[intersect(overlap_traits, all_aux_names)]
-  no_overlap_list <- aux[intersect(no_overlap_names, all_aux_names)]
+  overlap_list     <- aux[intersect(overlap_traits, all_aux_names)]
+  no_overlap_list  <- aux[intersect(no_overlap_names, all_aux_names)]
 
   # Step 3: Decorrelation
   target_z <- target[[z_col]]
@@ -100,11 +91,10 @@ run_fdrreg_snp <- function(target,
         col_intercept = ldsc_col$intercept
       )
     }
-    z_mat <- cbind(target_z,
-                   do.call(cbind, lapply(overlap_list, `[[`, z_col)))
+    z_mat  <- cbind(target_z, do.call(cbind, lapply(overlap_list, `[[`, z_col)))
     z_decor <- decorrelate_z_scores(z_mat, cov_matrix)
-    target_z <- z_decor[1, ]
-    overlap_z_decor <- t(z_decor[-1, , drop = FALSE])
+    target_z         <- z_decor[1, ]
+    overlap_z_decor  <- t(z_decor[-1, , drop = FALSE])
     colnames(overlap_z_decor) <- names(overlap_list)
   } else {
     overlap_z_decor <- NULL
@@ -118,48 +108,50 @@ run_fdrreg_snp <- function(target,
   } else NULL
 
   aux_features <- cbind(overlap_z_decor, no_overlap_z)
-  annot_mat <- NULL
+  annot_mat    <- NULL
   if (!is.null(annotations)) {
-    annot_mat <- align_annotations(target[[id_col]], annotations, id_col)
+    annot_mat <- align_annotations(target[[id_col]], annotations,
+                                   id_col, annot_id_col)
   }
   features <- build_combined_features(aux_features, annot_mat)
-
-  # Step 5: Transform
   features <- transform_features(features, feature_transform)
   covariates_used <- colnames(features)
 
-  # Step 6: Variable selection
-  vs_result <- perform_variable_selection(target_z, features,
-                                          method = var_select, seed = seed)
-  features <- vs_result$features
+  # Step 5: Variable selection
+  vs_result    <- perform_variable_selection(target_z, features,
+                                             method = var_select, seed = seed)
+  features     <- vs_result$features
   covariates_used <- vs_result$selected_cols
 
-  # Step 7: FDRreg
+  # Step 6: FDRreg
   set.seed(seed)
-  models <- fit_fdrreg_models(target_z, features,
-                              nulltype = fdrreg_nulltype,
-                              method = fdrreg_method)
+  fit <- fit_fdrreg_models(target_z, features,
+                           nulltype = fdrreg_nulltype,
+                           method = fdrreg_method)
+  models      <- fit$models
+  fit_status  <- fit$fit_status
 
-  # Step 8: Assemble
+  # Step 7: Assemble output
   full_results <- assemble_full_results(
     ids = target[[id_col]], z_scores = target_z,
     p_values = target[[p_col]], models = models
   )
 
-  thresholds <- standard_thresholds()
+  thresholds   <- standard_thresholds()
   summary_list <- list(threshold = thresholds)
-  if (!is.null(models$theoretical))
+  if (!is.null(models$theoretical) && !is.null(models$theoretical$FDR))
     summary_list$fdr_theo <- count_discoveries(models$theoretical$FDR, thresholds)
-  if (!is.null(models$empirical))
+  if (!is.null(models$empirical) && !is.null(models$empirical$FDR))
     summary_list$fdr_emp <- count_discoveries(models$empirical$FDR, thresholds)
   summary_counts <- as.data.frame(summary_list, stringsAsFactors = FALSE)
 
   assessment_model <- if (!is.null(models$theoretical)) models$theoretical else models$empirical
   assessment <- extract_model_assessment(assessment_model, covariates_used)
-  params <- record_params(seed, call)
+  params     <- record_params(seed, call)
 
   new_fdrreg_result(tier = "snp", full_results = full_results,
                     summary_counts = summary_counts, assessment = assessment,
                     models = models, varselect_model = vs_result$model,
-                    covariates_used = covariates_used, params = params)
+                    covariates_used = covariates_used, params = params,
+                    fit_status = fit_status)
 }
