@@ -23,7 +23,7 @@ detection in primary visual cortex.
 \emph{Journal of the American Statistical Association}, 110(510), 459-471.
 }
 \author{
-\strong{Maintainer}: Jinghong Qiu \email{your.email@example.com}
+\strong{Maintainer}: Jinghong Qiu \email{1155132472@link.cuhk.edu.hk}
 
 }
 \keyword{internal}
