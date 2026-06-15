@@ -1,47 +1,24 @@
 # R specific
+.Rproj.user
 .Rhistory
-.Rdata
 .RData
-.httr-oauth
-.Rproj.user/
+.Ruserdata
 *.Rproj
 
-# Package specific
+# Package build artifacts
+*.tar.gz
+*.Rcheck/
 src/*.o
 src/*.so
 src/*.dll
-inst/doc
-vignettes/*.html
-vignettes/*.pdf
-^_pkgdown\.yml$
-docs/
-^\.lintr$
-^\.github$
 
-# Data files (big files)
-*.rds
-*.RData
-*.csv
-*.txt
-*.tsv
-
-# Results and figures
-results/
-figures/
-*.png
-*.jpg
-*.pdf
-
-# IDE specific
-.vscode/
-.Rprofile
-.Renviron
-
-# System files
+# OS files
 .DS_Store
 Thumbs.db
 
-# Temporary files
-*~
-*.swp
-*.tmp
+# IDE
+.vscode/
+.idea/
+
+# Test output (user-specific)
+test_output/

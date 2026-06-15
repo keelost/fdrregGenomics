@@ -1,15 +1,43 @@
 # fdrregGenomics
 
-A comprehensive R package for integrating GWAS summary statistics with biological annotations using False Discovery Rate Regression (FDRreg).
+Genomics-Integrated False Discovery Rate Regression Pipeline
+
+## Disclaimer / Attribution
+
+> **The underlying FDRreg algorithm is developed by Scott et al. (2016,
+> JASA); this package provides the comprehensive genomics integration,
+> preprocessing, and validation workflow.**
+
+## Overview
+
+`fdrregGenomics` provides a unified pipeline for integrating GWAS summary
+statistics with biological annotations using False Discovery Rate
+Regression (FDRreg). It supports three genomic analysis levels:
+
+| Tier | Function | Description |
+|------|----------|-------------|
+| SNP | `run_fdrreg_snp()` | SNP-level GWAS with LDSC sample-overlap decorrelation |
+| MAGMA Gene | `run_fdrreg_magma_gene()` | MAGMA gene-level results |
+| TWAS | `run_fdrreg_twas()` | S-PrediXcan and S-MultiXcan results |
+
+### Features
+
+- **Sample-overlap decorrelation** via LDSC intercepts and matrix power
+  transformation (SNP level)
+- **Variable selection**: LASSO, Marginal Screening, Elastic Net, or none
+- **Biological annotation integration** with flexible ID column matching
+- **Both null types**: theoretical and empirical FDRreg models
+- **Standardized S3 output** with `print()`, `summary()`, and
+  `significant()` methods
+- **Reproducibility logs** including seed, R version, package versions,
+  and timestamps
 
 ## Installation
 
 ```r
-# Install the development version
-devtools::install_github("keelost/fdrregGenomics")
-
-# Or install from source code
-devtools::install("path/to/fdrregGenomics")
+# Install from GitHub
+# install.packages("devtools")
+devtools::install_github("YOUR_USERNAME/fdrregGenomics")
 ```
 
 ## Quick Start
@@ -17,29 +45,63 @@ devtools::install("path/to/fdrregGenomics")
 ```r
 library(fdrregGenomics)
 
-# Load sample data
-sim <- simulate_example_data(n_snps = 1000, n_genes = 100)
+# Simulate example data
+sim <- simulate_example_data(n_snps = 2000, n_genes = 200, seed = 42)
 
-# SNP level analysis
+# SNP-level analysis with LDSC decorrelation
 result <- run_fdrreg_snp(
 target = sim$snp_target,
 aux = sim$snp_aux,
+overlap_traits = sim$overlap_traits,
+ldsc_intercepts = sim$ldsc_intercepts,
+annotations = sim$annotations,
 feature_transform = "signed",
-var_select = "lasso"
+var_select = "lasso",
+seed = 42
 )
 
 # View results
 print(result)
-significant(result, threshold = 0.05)
+
+# Extract significant findings
+sig <- significant(result, threshold = 0.05, type = "theoretical")
+nrow(sig)
 ```
 
-## Features
+## Input Data Formats
 
-- Supports three analysis levels: SNP, MAGMA gene, and TWAS (S-PrediXcan/S-MultiXcan)
-- Optional sample overlap removal
-- Biological annotation integration
-- Variable selection methods: LASSO, elasticity network, marginal screening
-- Complete results output and visualization
+### Target GWAS (SNP-level)
+```
+snpid,chr,bp,a1,a2,z,pval
+rs12345,1,100000,A,G,2.31,0.021
+```
+
+### S-PrediXcan
+```
+gene,gene_name,zscore,pvalue
+ENSG00000167550.6,RHEBL1,5.32,1.1e-07
+```
+
+### S-MultiXcan
+```
+gene,gene_name,pvalue
+ENSG00000167550.6,RHEBL1,8.9e-08
+```
+
+### MAGMA Gene Output (`.genes.out`)
+```
+GENE CHR START STOP NSNPS NPARAM N ZSTAT P
+1001 1 100000 200000 50 10 100000 4.5 6.7e-06
+```
+
+## Citation
+
+If you use this package, please cite:
+
+- Scott, J. G., Kelly, R. C., Smith, M. A., Zhou, P., & Kass, R. E.
+  (2016). False discovery rate regression: an application to neural
+  synchrony detection in primary visual cortex. *Journal of the American
+  Statistical Association*, 110(510), 459-471.
 
 ## License
 
