@@ -37,7 +37,7 @@ Regression (FDRreg). It supports three genomic analysis levels:
 ```r
 # Install from GitHub
 # install.packages("devtools")
-devtools::install_github("YOUR_USERNAME/fdrregGenomics")
+devtools::install_github("keelost/fdrregGenomics")
 ```
 
 ## Quick Start

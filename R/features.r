@@ -85,7 +85,7 @@ build_combined_features <- function(aux_features = NULL, annotations = NULL) {
 
   if (ncol(result) == 0) {
     stop("No valid features remaining after removing constant columns.\n",
-         "  → Check that your auxiliary data and annotations contain non-zero values.",
+         "  -> Check that your auxiliary data and annotations contain non-zero values.",
          call. = FALSE)
   }
 

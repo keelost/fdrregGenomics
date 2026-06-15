@@ -42,10 +42,10 @@ fit_fdrreg_models <- function(target_z, features,
         paste0(
           "\n  [FDRreg ERROR] Fitting failed for nulltype='%s'.\n",
           "    Error: %s\n",
-          "    → FDR columns will be filled with NA.\n",
-          "    → Possible causes: features contain all-NA columns, or\n",
+          "    -> FDR columns will be filled with NA.\n",
+          "    -> Possible causes: features contain all-NA columns, or\n",
           "       sample size is too small for the number of features.\n",
-          "    → Suggestion: reduce features (var_select='lasso') or\n",
+          "    -> Suggestion: reduce features (var_select='lasso') or\n",
           "       check your input data.\n"
         ),
         nt, result$error_msg
@@ -66,9 +66,9 @@ fit_fdrreg_models <- function(target_z, features,
         paste0(
           "\n  [FDRreg WARNING] nulltype='%s': optimization failed; ",
           "reverted to no-covariates model.\n",
-          "    → FDR values are still returned (computed without feature effects).\n",
-          "    → This usually means features have numerical issues.\n",
-          "    → Suggestions:\n",
+          "    -> FDR values are still returned (computed without feature effects).\n",
+          "    -> This usually means features have numerical issues.\n",
+          "    -> Suggestions:\n",
           "       1. Check for constant/zero-variance columns in features.\n",
           "       2. Reduce the number of features (var_select='lasso').\n",
           "       3. Ensure features and target have matching sample sizes.\n"

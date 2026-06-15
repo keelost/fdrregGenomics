@@ -58,7 +58,7 @@ print.fdrreg_result <- function(x, ...) {
     print(top, row.names = FALSE, digits = 4)
   } else {
     cat("\n-- Feature Assessment -------------------------------------\n")
-    cat("  (not available — model may have reverted to intercept-only)\n")
+    cat("  (not available -- model may have reverted to intercept-only)\n")
   }
 
   cat("\n-- Reproducibility ----------------------------------------\n")

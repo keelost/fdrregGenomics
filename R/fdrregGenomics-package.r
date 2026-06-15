@@ -21,6 +21,6 @@
 #' @importFrom powerplus Matpow
 #' @importFrom glmnet cv.glmnet
 #' @importFrom HelpersMG SEfromHessian
-#' @importFrom stats qnorm pnorm rnorm cor
+#' @importFrom stats qnorm pnorm rnorm cor sd coef runif rbinom
 #' @importFrom utils packageVersion head
 "_PACKAGE"
