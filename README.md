@@ -41,12 +41,6 @@ significant(result, threshold = 0.05)
 - Variable selection methods: LASSO, elasticity network, marginal screening
 - Complete results output and visualization
 
-## Documentation
-
-- [Quick Start](vignettes/01-quickstart.Rmd)
-- [SNP Level Analysis Tutorial](vignettes/02-snp-analysis.Rmd)
-- [Real Data Analysis Workflow](vignettes/03-real-data-workflow.Rmd)
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) file
