@@ -349,35 +349,38 @@ simulate_summary_data <- function(n_snps, n_genes, n_annot, seed,
   
   # Generate signal probabilities
   if (signal_model == "complex" && !is.null(signal_function)) {
-    # Use user-provided complex function (accepts separate columns)
-    # Convert matrix to list of columns for function call
-    col_list <- lapply(seq_len(ncol(annotations)), function(i) annotations[, i])
-    # Call user function with multiple arguments
+  # Use user-provided complex function
+  # Split matrix into individual columns
+  col_list <- lapply(seq_len(ncol(annotations)), function(i) annotations[, i])
+  
+  # Check number of expected arguments
+  func_args <- formals(signal_function)
+  n_expected <- length(func_args)
+  
+  # Handle special case: if function has ... argument, pass all columns
+  if ("..." %in% names(func_args)) {
     log_odds <- do.call(signal_function, col_list)
-    signal_prob <- ilogit(log_odds)
   } else {
-    # Default simple logistic model
-    beta_intercept <- runif(1, intercept_range[1], intercept_range[2])
-    beta_coef <- runif(min(n_annot, 3), coefficient_range[1], coefficient_range[2])
-    
-    # Calculate log_odds
-    if (n_annot >= 3) {
-      log_odds <- beta_intercept + 
-        beta_coef[1] * annotations[, 1] + 
-        beta_coef[2] * annotations[, 2] +
-        beta_coef[3] * annotations[, 3]
-    } else if (n_annot >= 2) {
-      log_odds <- beta_intercept + 
-        beta_coef[1] * annotations[, 1] + 
-        beta_coef[2] * annotations[, 2]
-    } else if (n_annot >= 1) {
-      log_odds <- beta_intercept + 
-        beta_coef[1] * annotations[, 1]
-    } else {
-      log_odds <- rep(beta_intercept, n_total)
+    # If expected args < columns, use first n_expected columns
+    if (n_expected < length(col_list)) {
+      col_list <- col_list[1:n_expected]
+      warning(sprintf(
+        "[simulate] Signal function expects %d arguments but %d annotation columns provided. Using first %d columns.",
+        n_expected, ncol(annotations), n_expected
+      ))
     }
-    signal_prob <- ilogit(log_odds)
+    # If expected args > columns, recycle columns
+    if (n_expected > length(col_list)) {
+      col_list <- rep(col_list, length.out = n_expected)
+      warning(sprintf(
+        "[simulate] Signal function expects %d arguments but only %d annotation columns provided. Recycling columns.",
+        n_expected, ncol(annotations)
+      ))
+    }
+    log_odds <- do.call(signal_function, col_list)
   }
+  signal_prob <- ilogit(log_odds)
+}
   
   # Generate true signal indicators
   is_signal <- rbinom(n_total, 1, signal_prob)

@@ -93,9 +93,11 @@ sim_summary <- simulate_example_data(
 n_snps = 1000,
 simulation_mode = "summary_only",
 signal_model = "complex",
-signal_function = function(x1, x2) {
- -3.0 + 0.8*x1 + 1.0*x2
+# Make sure function arguments match n_annot
+signal_function = function(x1, x2, x3) {
+ -3.0 + 0.8*x1 + 1.0*x2 + 1.2*x3
 },
+n_annot = 3, # Match number of function arguments
 seed = 42
 )
 
@@ -114,7 +116,7 @@ cat("Raw mode feature matrix dim:", dim(sim_raw$features), "\n")
 ### Complex Signal Models
 
 ```{r complex_signal}
-# Define a complex signal model
+# Define a complex signal model with 5 parameters
 complex_model <- function(x1, x2, x3, x4, x5) {
 -2.5 + 0.5*x1 + 0.8*x2 + 1.2*x3 - 0.3*x4 + 0.1*x5
 }
@@ -124,7 +126,7 @@ n_snps = 2000,
 simulation_mode = "summary_only",
 signal_model = "complex",
 signal_function = complex_model,
-n_annot = 5, # Need at least 5 annotations for the model
+n_annot = 5, # Match number of function arguments
 seed = 42
 )
 
@@ -132,46 +134,6 @@ seed = 42
 signal_rate <- mean(sim_complex$true_info$snp$is_signal)
 cat("Complex model signal rate:", round(signal_rate, 3), "\n")
 ```
-
-### Evaluating Simulation Performance
-
-```{r eval_sim}
-# Run FDRreg analysis
-result <- run_fdrreg_snp(
-target = sim_summary$snp,
-id_col = "id",
-z_col = "z",
-p_col = "pval",
-feature_transform = "abs",
-seed = 42
-)
-
-# Evaluate FDR performance
-fdr_eval <- evaluate_fdr_performance(
-fdr_values = result$full_results$fdr_theo,
-true_signals = sim_summary$true_info$snp$is_signal,
-thresholds = c(0.05, 0.1, 0.2)
-)
-
-print(fdr_eval)
-
-# Evaluate variable selection (if LASSO was used)
-if (!is.null(result$varselect_model)) {
-selected_vars <- which(result$covariates_used %in%
- colnames(sim_summary$annotations)[-1])
-true_vars <- which(sim_summary$true_info$snp$is_signal)
-
-var_eval <- evaluate_variable_selection(
- selected_vars = selected_vars,
- true_vars = true_vars,
- total_vars = ncol(sim_summary$annotations) - 1
-)
-
-cat("\nVariable Selection Performance:\n")
-cat("Precision:", round(var_eval$precision, 3), "\n")
-cat("Recall:", round(var_eval$recall, 3), "\n")
-cat("F1 Score:", round(var_eval$F1, 3), "\n")
-}
 ```
 
 ---

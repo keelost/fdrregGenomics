@@ -34,6 +34,7 @@ Regression (FDRreg). It supports three genomic analysis levels:
 - **Enhanced simulation**: Multiple simulation modes (full, summary, raw), 
   complex signal models, and mixture effect distributions
 - **Evaluation utilities**: Functions to assess FDR control and variable selection
+- **Intelligent parameter handling**: Automatic adjustment of signal function arguments
 
 ## Installation
 
@@ -68,14 +69,14 @@ sim_complex <- simulate_example_data(
 
 # SNP-level analysis with LDSC decorrelation
 result <- run_fdrreg_snp(
-target = sim$snp_target,
-aux = sim$snp_aux,
-overlap_traits = sim$overlap_traits,
-ldsc_intercepts = sim$ldsc_intercepts,
-annotations = sim$annotations,
-feature_transform = "signed",
-var_select = "lasso",
-seed = 42
+  target = sim$snp_target,
+  aux = sim$snp_aux,
+  overlap_traits = sim$overlap_traits,
+  ldsc_intercepts = sim$ldsc_intercepts,
+  annotations = sim$annotations,
+  feature_transform = "signed",
+  var_select = "lasso",
+  seed = 42
 )
 
 # View results

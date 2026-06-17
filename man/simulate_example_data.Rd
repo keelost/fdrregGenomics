@@ -11,7 +11,13 @@ simulate_example_data(
   n_annot = 10,
   prop_signal = 0.02,
   overlap_prop = 0.5,
-  seed = 42
+  seed = 42,
+  simulation_mode = c("full", "summary_only", "raw_only"),
+  signal_model = c("simple", "complex"),
+  signal_function = NULL,
+  intercept_range = c(-3, -1),
+  coefficient_range = c(0.1, 1.5),
+  effect_distribution = NULL
 )
 }
 \arguments{
@@ -29,24 +35,36 @@ simulate_example_data(
 sample overlap (default 0.5).}
 
 \item{seed}{Integer, random seed (default 42).}
+
+\item{simulation_mode}{Character, simulation mode:
+\code{"full"} (default) generates complete dataset for all tiers,
+\code{"summary_only"} generates z-scores and p-values only,
+\code{"raw_only"} generates raw data with features and response.}
+
+\item{signal_model}{Character, signal probability model:
+\code{"simple"} (default) uses basic logistic model with random coefficients,
+\code{"complex"} uses a user-provided function.}
+
+\item{signal_function}{Function for complex signal model (default NULL).
+Should accept multiple columns as separate arguments (e.g., function(x1, x2, x3)).}
+
+\item{intercept_range}{Numeric vector of length 2, range for intercept in simple model (default c(-3, -1)).}
+
+\item{coefficient_range}{Numeric vector of length 2, range for coefficients in simple model (default c(0.1, 1.5)).}
+
+\item{effect_distribution}{List specifying effect distribution (default NULL).
+If NULL, uses standard normal. Otherwise, specify:
+\itemize{
+\item type: "normal" or "mixture"
+\item weights: vector of mixture weights (required for mixture)
+\item means: vector of mixture means (required for mixture)
+\item sds: vector of mixture standard deviations (required for mixture)
+}}
 }
 \value{
-A named list with simulated datasets:
-\describe{
-\item{snp_target}{Data frame of target GWAS summary statistics.}
-\item{snp_aux}{Named list of auxiliary GWAS data frames.}
-\item{overlap_traits}{Character vector of overlapping trait names.}
-\item{ldsc_intercepts}{Data frame of LDSC intercepts.}
-\item{cov_matrix}{Pre-built covariance matrix.}
-\item{annotations}{Data frame of biological annotations.}
-\item{magma_target}{Data frame of MAGMA gene-level target results.}
-\item{magma_aux}{Named list of MAGMA gene-level auxiliary results.}
-\item{gene_annotations}{Data frame of gene-level biological annotations.}
-\item{spredixcan_target}{Data frame of S-PrediXcan target results.}
-\item{spredixcan_aux}{Named list of S-PrediXcan auxiliary results.}
-\item{smultixcan_target}{Data frame of S-MultiXcan target results.}
-\item{smultixcan_aux}{Named list of S-MultiXcan auxiliary results.}
-}
+For simulation_mode = "full": a named list with simulated datasets.
+For simulation_mode = "summary_only": a list with SNP and gene-level z-scores/p-values.
+For simulation_mode = "raw_only": a list with raw data and features.
 }
 \description{
 Generates simulated GWAS summary statistics, auxiliary trait data,
@@ -54,8 +72,17 @@ LDSC intercepts, MAGMA gene-level results, TWAS results, and
 biological annotations for demonstration and testing.
 }
 \examples{
-sim <- simulate_example_data(n_snps = 2000, n_genes = 200, seed = 42)
-names(sim)
-nrow(sim$snp_target)
+# Full simulation (original behavior)
+sim_full <- simulate_example_data(n_snps = 1000, seed = 42)
+
+# Summary statistics only with complex signal model
+sim_summary <- simulate_example_data(
+  n_snps = 1000,
+  simulation_mode = "summary_only",
+  signal_model = "complex",
+  signal_function = function(x1, x2) {
+    -3 + 0.8*x1 + 1.0*x2
+  }
+)
 
 }
