@@ -50,7 +50,7 @@ devtools::install_github("keelost/fdrregGenomics")
 library(fdrregGenomics)
 
 # Simulate summary statistics with complex signal model
-sim_complex <- simulate_example_data(
+sim <- simulate_example_data(
   n_snps = 2000,
   simulation_mode = "summary_only",
   signal_model = "complex",
