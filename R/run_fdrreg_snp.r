@@ -58,6 +58,39 @@ run_fdrreg_snp <- function(target,
   fdrreg_nulltype   <- match.arg(fdrreg_nulltype)
   call <- match.call()
 
+  # ============================================================
+  # NEW: Auto-detect new simulation mode and adjust parameters
+  # ============================================================
+  # Check if this is new simulation mode data
+  if (is.data.frame(target) && 
+      "id" %in% colnames(target) && 
+      attr(target, "simulation_mode") == "summary_only") {
+    
+    # Auto-adjust id_col for new simulation mode
+    if (id_col == "snpid" && !"snpid" %in% colnames(target)) {
+      id_col <- "id"
+      message("[run_fdrreg_snp] Auto-detected 'summary_only' simulation mode. Using 'id' as ID column.")
+    }
+    
+    # For new mode, aux is typically empty
+    if (missing(aux)) {
+      aux <- list()
+      message("[run_fdrreg_snp] No auxiliary traits provided. Using only target and annotations.")
+    }
+    
+    # Auto-set annot_id_col if not provided
+    if (is.null(annot_id_col) && !is.null(annotations)) {
+      # Check if annotations have 'id' column
+      if ("id" %in% colnames(annotations)) {
+        annot_id_col <- "id"
+        message("[run_fdrreg_snp] Auto-matched annotation ID column: 'id'")
+      }
+    }
+  }
+  # ============================================================
+  # END NEW CODE
+  # ============================================================
+
   # Step 0: Validate
   validate_columns(target, c(id_col, z_col, p_col), "target")
   for (nm in names(aux)) {
@@ -116,6 +149,45 @@ run_fdrreg_snp <- function(target,
   features <- build_combined_features(aux_features, annot_mat)
   features <- transform_features(features, feature_transform)
   covariates_used <- colnames(features)
+
+  # ============================================================
+  # NEW: Handle case when no features are provided
+  # ============================================================
+  if (is.null(features) || ncol(features) == 0) {
+    warning("[run_fdrreg_snp] No features available for FDRreg analysis. ",
+            "Consider providing 'aux' or 'annotations'.",
+            call. = FALSE)
+    # Create minimal result with only target z-scores
+    full_results <- data.frame(
+      id = target[[id_col]],
+      z = target_z,
+      p = target[[p_col]],
+      fdr_theo = NA_real_,
+      lfdr_theo = NA_real_,
+      pep_theo = NA_real_,
+      fdr_emp = NA_real_,
+      lfdr_emp = NA_real_,
+      pep_emp = NA_real_,
+      stringsAsFactors = FALSE
+    )
+    
+    # Return minimal result
+    return(new_fdrreg_result(
+      tier = "snp",
+      full_results = full_results,
+      summary_counts = data.frame(threshold = standard_thresholds(),
+                                  fdr_theo = 0, fdr_emp = 0),
+      assessment = data.frame(beta = NA, se = NA, z_score = NA, p_value = NA),
+      models = list(theoretical = NULL, empirical = NULL),
+      varselect_model = NULL,
+      covariates_used = character(0),
+      params = record_params(seed, call),
+      fit_status = "no_features"
+    ))
+  }
+  # ============================================================
+  # END NEW CODE
+  # ============================================================
 
   # Step 5: Variable selection
   vs_result    <- perform_variable_selection(target_z, features,

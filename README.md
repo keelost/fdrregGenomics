@@ -31,10 +31,10 @@ Regression (FDRreg). It supports three genomic analysis levels:
   `significant()` methods
 - **Reproducibility logs** including seed, R version, package versions,
   and timestamps
-- **Enhanced simulation**: Multiple simulation modes (full, summary, raw), 
+- **Enhanced simulation**: Multiple simulation modes (full, summary, raw),
   complex signal models, and mixture effect distributions
-- **Evaluation utilities**: Functions to assess FDR control and variable selection
-- **Intelligent parameter handling**: Automatic adjustment of signal function arguments
+- **Evaluation utilities**: Functions for FDR control and variable selection
+  performance assessment
 
 ## Installation
 
@@ -46,37 +46,24 @@ devtools::install_github("keelost/fdrregGenomics")
 
 ## Quick Start
 
+### Basic Example (Original Mode)
+
 ```r
 library(fdrregGenomics)
 
-# Simulate summary statistics with complex signal model
-sim <- simulate_example_data(
-  n_snps = 2000,
-  simulation_mode = "summary_only",
-  signal_model = "complex",
-  signal_function = function(x1, x2, x3) {
-    -3.0 + 0.8*x1 + 1.0*x2 + 1.2*x3
-  },
-  effect_distribution = list(
-    type = "mixture",
-    weights = c(0.4, 0.2, 0.4),
-    means = c(-1.25, 0, 1.25),
-    sds = c(1, 0.8, 1)
-  ),
-  seed = 42
-)
-
+# Simulate example data (full mode - default)
+sim <- simulate_example_data(n_snps = 2000, n_genes = 200, seed = 42)
 
 # SNP-level analysis with LDSC decorrelation
 result <- run_fdrreg_snp(
-  target = sim$snp_target,
-  aux = sim$snp_aux,
-  overlap_traits = sim$overlap_traits,
-  ldsc_intercepts = sim$ldsc_intercepts,
-  annotations = sim$annotations,
-  feature_transform = "signed",
-  var_select = "lasso",
-  seed = 42
+target = sim$snp_target,
+aux = sim$snp_aux,
+overlap_traits = sim$overlap_traits,
+ldsc_intercepts = sim$ldsc_intercepts,
+annotations = sim$annotations,
+feature_transform = "signed",
+var_select = "lasso",
+seed = 42
 )
 
 # View results
@@ -85,11 +72,40 @@ print(result)
 # Extract significant findings
 sig <- significant(result, threshold = 0.05, type = "theoretical")
 nrow(sig)
+```
 
-# Evaluate FDR performance
+### Advanced Example (New Simulation Modes)
+
+```r
+library(fdrregGenomics)
+
+# Simulate summary statistics with complex signal model
+sim_summary <- simulate_example_data(
+n_snps = 2000,
+simulation_mode = "summary_only",
+signal_model = "complex",
+signal_function = function(x1, x2, x3) {
+ -3.0 + 0.8*x1 + 1.0*x2 + 1.2*x3
+},
+n_annot = 3,
+seed = 42
+)
+
+# SNP analysis with new simulation mode
+result_summary <- run_fdrreg_snp(
+target = sim_summary$snp,
+annotations = sim_summary$annotations,
+id_col = "id", # Note: new mode uses "id" column
+z_col = "z",
+p_col = "pval",
+feature_transform = "abs",
+seed = 42
+)
+
+# Evaluate FDR control performance
 fdr_perf <- evaluate_fdr_performance(
-  fdr_values = result$full_results$fdr_theo,
-  true_signals = sim_complex$true_info$snp$is_signal
+fdr_values = result_summary$full_results$fdr_theo,
+true_signals = sim_summary$true_info$snp$is_signal
 )
 print(fdr_perf)
 ```
@@ -118,6 +134,59 @@ ENSG00000167550.6,RHEBL1,8.9e-08
 ```
 GENE CHR START STOP NSNPS NPARAM N ZSTAT P
 1001 1 100000 200000 50 10 100000 4.5 6.7e-06
+```
+
+## Simulation Modes
+
+The `simulate_example_data()` function supports three simulation modes:
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `full` | Complete simulated datasets (default) | Testing full pipeline |
+| `summary_only` | Z-scores and p-values only | Method comparison studies |
+| `raw_only` | Raw data with features and response | Traditional statistical analysis |
+
+### Complex Signal Models
+
+```r
+# Define a complex signal model
+complex_model <- function(x1, x2, x3, x4, x5) {
+-2.5 + 0.5*x1 + 0.8*x2 + 1.2*x3 - 0.3*x4 + 0.1*x5
+}
+
+# Generate simulated data with complex signals
+sim_complex <- simulate_example_data(
+n_snps = 2000,
+simulation_mode = "summary_only",
+signal_model = "complex",
+signal_function = complex_model,
+n_annot = 5,
+effect_distribution = list(
+ type = "mixture",
+ weights = c(0.4, 0.2, 0.4),
+ means = c(-1.25, 0, 1.25),
+ sds = c(1, 0.8, 1)
+),
+seed = 42
+)
+```
+
+## Evaluation Functions
+
+```r
+# Evaluate FDR control performance
+fdr_eval <- evaluate_fdr_performance(
+fdr_values = result$full_results$fdr_theo,
+true_signals = true_signals_vector,
+thresholds = c(0.05, 0.1, 0.2)
+)
+
+# Evaluate variable selection performance
+var_eval <- evaluate_variable_selection(
+selected_vars = which(result$covariates_used %in% selected_features),
+true_vars = which(true_signals),
+total_vars = ncol(features_matrix)
+)
 ```
 
 ## Citation
