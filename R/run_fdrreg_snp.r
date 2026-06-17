@@ -61,29 +61,61 @@ run_fdrreg_snp <- function(target,
   # ============================================================
   # NEW: Auto-detect new simulation mode and adjust parameters
   # ============================================================
-  # Check if this is new simulation mode data
-  if (is.data.frame(target) && 
-      "id" %in% colnames(target) && 
-      attr(target, "simulation_mode") == "summary_only") {
-    
+  # More robust detection based on column names
+  is_new_mode <- FALSE
+  
+  if (is.data.frame(target)) {
+    # Check for simulation_mode attribute
+    if (!is.null(attr(target, "simulation_mode")) && 
+        attr(target, "simulation_mode") == "summary_only") {
+      is_new_mode <- TRUE
+    }
+    # Check for column patterns
+    else if ("id" %in% colnames(target) && 
+             !"snpid" %in% colnames(target) &&
+             "z" %in% colnames(target) &&
+             "pval" %in% colnames(target)) {
+      # Check for annotation columns
+      annot_cols <- grep("^annot\\d+$", colnames(target), value = TRUE)
+      if (length(annot_cols) > 0) {
+        is_new_mode <- TRUE
+      }
+    }
+  }
+  
+  if (is_new_mode) {
     # Auto-adjust id_col for new simulation mode
     if (id_col == "snpid" && !"snpid" %in% colnames(target)) {
       id_col <- "id"
-      message("[run_fdrreg_snp] Auto-detected 'summary_only' simulation mode. Using 'id' as ID column.")
+      message("[run_fdrreg_snp] Auto-detected new simulation mode. Using 'id' as target ID column.")
     }
     
     # For new mode, aux is typically empty
-    if (missing(aux)) {
+    if (missing(aux) || is.null(aux)) {
       aux <- list()
       message("[run_fdrreg_snp] No auxiliary traits provided. Using only target and annotations.")
     }
     
     # Auto-set annot_id_col if not provided
     if (is.null(annot_id_col) && !is.null(annotations)) {
-      # Check if annotations have 'id' column
-      if ("id" %in% colnames(annotations)) {
+      # Check if annotations have ID column
+      if (id_col %in% colnames(annotations)) {
+        annot_id_col <- id_col
+        message(sprintf("[run_fdrreg_snp] Auto-matched annotation ID column: '%s'", id_col))
+      } else if ("id" %in% colnames(annotations)) {
         annot_id_col <- "id"
         message("[run_fdrreg_snp] Auto-matched annotation ID column: 'id'")
+      }
+    }
+    
+    # If annotations are NULL, extract from target data
+    if (is.null(annotations)) {
+      # Check if target has annotation columns
+      annot_cols <- grep("^annot\\d+$", colnames(target), value = TRUE)
+      if (length(annot_cols) > 0) {
+        annotations <- target[, c(id_col, annot_cols), drop = FALSE]
+        annot_id_col <- id_col
+        message("[run_fdrreg_snp] Extracted annotations from target data.")
       }
     }
   }
