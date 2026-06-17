@@ -31,6 +31,9 @@ Regression (FDRreg). It supports three genomic analysis levels:
   `significant()` methods
 - **Reproducibility logs** including seed, R version, package versions,
   and timestamps
+- **Enhanced simulation**: Multiple simulation modes (full, summary, raw), 
+  complex signal models, and mixture effect distributions
+- **Evaluation utilities**: Functions to assess FDR control and variable selection
 
 ## Installation
 
@@ -45,8 +48,23 @@ devtools::install_github("keelost/fdrregGenomics")
 ```r
 library(fdrregGenomics)
 
-# Simulate example data
-sim <- simulate_example_data(n_snps = 2000, n_genes = 200, seed = 42)
+# Simulate summary statistics with complex signal model
+sim_complex <- simulate_example_data(
+  n_snps = 2000,
+  simulation_mode = "summary_only",
+  signal_model = "complex",
+  signal_function = function(x1, x2, x3) {
+    -3.0 + 0.8*x1 + 1.0*x2 + 1.2*x3
+  },
+  effect_distribution = list(
+    type = "mixture",
+    weights = c(0.4, 0.2, 0.4),
+    means = c(-1.25, 0, 1.25),
+    sds = c(1, 0.8, 1)
+  ),
+  seed = 42
+)
+
 
 # SNP-level analysis with LDSC decorrelation
 result <- run_fdrreg_snp(
@@ -66,6 +84,13 @@ print(result)
 # Extract significant findings
 sig <- significant(result, threshold = 0.05, type = "theoretical")
 nrow(sig)
+
+# Evaluate FDR performance
+fdr_perf <- evaluate_fdr_performance(
+  fdr_values = result$full_results$fdr_theo,
+  true_signals = sim_complex$true_info$snp$is_signal
+)
+print(fdr_perf)
 ```
 
 ## Input Data Formats

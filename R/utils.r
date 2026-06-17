@@ -193,3 +193,123 @@ count_discoveries <- function(fdr_vec, thresholds) {
     as.integer(sum(fdr_vec < th, na.rm = TRUE))
   }, integer(1))
 }
+
+#' Evaluate FDR Control Performance
+#'
+#' Calculate False Discovery Proportion (FDP), power, and F1 score
+#' for different FDR thresholds.
+#'
+#' @param fdr_values Numeric vector of FDR values from FDRreg.
+#' @param true_signals Logical vector indicating true signals.
+#' @param thresholds Numeric vector of FDR thresholds (default c(0.01, 0.05, 0.1, 0.2)).
+#'
+#' @return Data frame with performance metrics for each threshold.
+#'
+#' @examples
+#' # Example usage with simulated data
+#' fdr_vals <- runif(100, 0, 0.3)
+#' true_sigs <- rbinom(100, 1, 0.1) == 1
+#' perf <- evaluate_fdr_performance(fdr_vals, true_sigs)
+#' print(perf)
+#'
+#' @export
+evaluate_fdr_performance <- function(fdr_values, true_signals, 
+                                     thresholds = c(0.01, 0.05, 0.1, 0.2)) {
+  # Ensure inputs are vectors
+  fdr_values <- as.vector(fdr_values)
+  true_signals <- as.logical(true_signals)
+  
+  # Initialize results data frame
+  results <- data.frame(
+    threshold = thresholds,
+    FDP = NA_real_,
+    power = NA_real_,
+    F1 = NA_real_,
+    stringsAsFactors = FALSE
+  )
+  
+  # Calculate metrics for each threshold
+  for (i in seq_along(thresholds)) {
+    threshold <- thresholds[i]
+    findings <- which(fdr_values <= threshold)
+    
+    if (length(findings) > 0) {
+      TP <- sum(true_signals[findings])
+      FP <- sum(!true_signals[findings])
+      FN <- sum(true_signals) - TP
+      
+      precision <- TP / (TP + FP)
+      recall <- TP / (TP + FN)
+      
+      results$FDP[i] <- FP / length(findings)
+      results$power[i] <- recall
+      results$F1[i] <- ifelse(precision + recall > 0, 
+                               2 * (precision * recall) / (precision + recall), 
+                               0)
+    }
+  }
+  
+  return(results)
+}
+
+#' Evaluate Variable Selection Performance
+#'
+#' Calculate precision, recall, and F1 score for variable selection results.
+#'
+#' @param selected_vars Vector of selected variable indices or logical vector.
+#' @param true_vars Vector of true variable indices or logical vector.
+#' @param total_vars Total number of variables (optional, required if indices are used).
+#'
+#' @return List with performance metrics including precision, recall, F1,
+#'   and basic counts (TP, FP, FN, TN).
+#'
+#' @examples
+#' # Example usage
+#' selected <- sample(1:100, 15)
+#' true <- sample(1:100, 20)
+#' perf <- evaluate_variable_selection(selected, true, total_vars = 100)
+#' cat("Precision:", perf$precision, "\n")
+#' cat("Recall:", perf$recall, "\n")
+#'
+#' @export
+evaluate_variable_selection <- function(selected_vars, true_vars, total_vars = NULL) {
+  # Convert indices to logical vectors if needed
+  if (is.numeric(selected_vars) && !is.null(total_vars)) {
+    selected_logical <- rep(FALSE, total_vars)
+    selected_logical[selected_vars] <- TRUE
+  } else {
+    selected_logical <- as.logical(selected_vars)
+  }
+  
+  if (is.numeric(true_vars) && !is.null(total_vars)) {
+    true_logical <- rep(FALSE, total_vars)
+    true_logical[true_vars] <- TRUE
+  } else {
+    true_logical <- as.logical(true_vars)
+  }
+  
+  # Calculate basic counts
+  TP <- sum(selected_logical & true_logical)
+  FP <- sum(selected_logical & !true_logical)
+  FN <- sum(!selected_logical & true_logical)
+  TN <- sum(!selected_logical & !true_logical)
+  
+  # Calculate metrics
+  precision <- ifelse(TP + FP > 0, TP / (TP + FP), 0)
+  recall <- ifelse(TP + FN > 0, TP / (TP + FN), 0)
+  F1 <- ifelse(precision + recall > 0, 
+               2 * (precision * recall) / (precision + recall), 
+               0)
+  
+  return(list(
+    precision = precision,
+    recall = recall,
+    F1 = F1,
+    TP = TP,
+    FP = FP,
+    FN = FN,
+    TN = TN,
+    support = sum(selected_logical),  # Number of selected variables
+    true_count = sum(true_logical)    # Number of true variables
+  ))
+}

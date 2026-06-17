@@ -1,7 +1,7 @@
 Package: fdrregGenomics
 Type: Package
 Title: Genomics-Integrated False Discovery Rate Regression Pipeline
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Jinghong", "Qiu",
                    role = c("aut", "cre"),
                    email = "1155132472@link.cuhk.edu.hk")
@@ -25,7 +25,9 @@ Suggests:
     data.table,
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    future,
+    future.apply
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
