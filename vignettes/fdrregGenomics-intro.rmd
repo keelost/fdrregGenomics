@@ -301,7 +301,55 @@ result <- run_fdrreg(
 
 summary(result)
 ```
+```
 
+---
+
+## Example 5: Working with Built-in & Custom Annotations
+
+### 5.1 Using Built-in Curated Psychiatric Annotations
+
+The package includes a comprehensive, frozen matrix of 23 biological annotations across 19,503 genes (Supplementary Table S1.21). You can load it with different gene identifier keys:
+
+```{r builtin_annot, eval = FALSE}
+# Load Entrez ID keyed annotations (e.g. for MAGMA)
+annot_entrez <- load_builtin_annotations(key_type = "entrez")
+head(annot_entrez[, 1:6])
+
+# Load Ensembl ID keyed annotations (e.g. for S-PrediXcan / TWAS)
+annot_ensembl <- load_builtin_annotations(key_type = "ensembl")
+head(annot_ensembl[, 1:6])
+```
+
+### 5.2 Customizing and Updating Annotations for Independent GWAS
+
+Future users can seamlessly supply their own annotation tables (e.g., cell-type specific eQTLs, ChIP-seq binding scores, or custom pathway scores). The `prepare_custom_annotations()` function handles ID alignment, missing value imputation, and merging:
+
+```{r custom_annot, eval = FALSE}
+# Create a mock user custom annotation data frame
+my_custom_features <- data.frame(
+  GENE = c("1001", "1002", "1003"),
+  scRNA_cortex_expr = c(4.2, 0.1, 2.5),
+  epigenetic_enhancer = c(1, 0, 1)
+)
+
+# Prepare and combine with existing annotations (or use standalone)
+custom_annot_ready <- prepare_custom_annotations(
+  user_annotations = my_custom_features,
+  id_col = "GENE",
+  fill_na = 0
+)
+
+# Run MAGMA gene FDRreg with custom annotations
+res_custom <- run_fdrreg_magma_gene(
+  target      = sim$magma_target,
+  annotations = custom_annot_ready,
+  id_col      = "GENE",
+  var_select  = "lasso",
+  seed        = 42
+)
+summary(res_custom)
+```
 ---
 
 ## Comparing Variable Selection Methods

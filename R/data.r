@@ -1,0 +1,44 @@
+#' Curated Biological Annotations for Psychiatric and Brain Genomics
+#'
+#' A comprehensive, frozen gene-level biological annotation matrix comprising 23
+#' features across 19,503 human genes. Derived from DAVID 6.8 (functional categories),
+#' Open Targets Platform (February 2020 extraction), and denovo-db (v1.6.1).
+#'
+#' @format A data frame with 19,503 rows and 24 variables:
+#' \describe{
+#'   \item{ID}{Entrez Gene ID (integer).}
+#'   \item{ENSEMBL_GENE_ID}{Ensembl Gene Identifier (character, e.g. ENSG00000121410).}
+#'   \item{GeneName}{HGNC Gene Symbol (character, e.g. A1BG).}
+#'   \item{dise.brain}{DAVID-derived association with psychiatric or neurological disorders (0 = none, 1 = general neurological, 2 = disorder-specific/strong).}
+#'   \item{bio.inter}{DAVID-derived neuro-relevant biological interactions score (0, 1, 2).}
+#'   \item{bio.brain}{DAVID-derived participation in neuro-relevant biological processes (0, 1, 2).}
+#'   \item{expre.brain}{DAVID-derived brain-tissue expression relevance (0, 1).}
+#'   \item{pathway.brain}{DAVID-derived neuro-relevant pathway involvement (0, 1).}
+#'   \item{tfbs}{Presence of transcription factor binding sites relevant to neural regulation (0, 1).}
+#'   \item{ASDDenovo}{Binary indicator of de novo mutation observed in Autism Spectrum Disorder in denovo-db (0, 1).}
+#'   \item{SCZDenovo}{Binary indicator of de novo mutation observed in Schizophrenia in denovo-db (0, 1).}
+#'   \item{scz.drug}{Open Targets association score for Schizophrenia: Drug targets category (0 to 1).}
+#'   \item{scz.literature}{Open Targets association score for Schizophrenia: Literature mining (0 to 1).}
+#'   \item{scz.animal}{Open Targets association score for Schizophrenia: Animal models (0 to 1).}
+#'   \item{depre.drug}{Open Targets score for Major Depressive Disorder: Drug targets (0 to 1).}
+#'   \item{depre.literature}{Open Targets score for Major Depressive Disorder: Literature mining (0 to 1).}
+#'   \item{bpd.drug}{Open Targets score for Bipolar Disorder: Drug targets (0 to 1).}
+#'   \item{bpd.literature}{Open Targets score for Bipolar Disorder: Literature mining (0 to 1).}
+#'   \item{adhd.drug}{Open Targets score for ADHD: Drug targets (0 to 1).}
+#'   \item{adhd.literature}{Open Targets score for ADHD: Literature mining (0 to 1).}
+#'   \item{adhd.animal}{Open Targets score for ADHD: Animal models (0 to 1).}
+#'   \item{asd.drug}{Open Targets score for Autism Spectrum Disorder: Drug targets (0 to 1).}
+#'   \item{asd.literature}{Open Targets score for Autism Spectrum Disorder: Literature mining (0 to 1).}
+#'   \item{asd.animal}{Open Targets score for Autism Spectrum Disorder: Animal models (0 to 1).}
+#' }
+#' @source
+#' Supplementary Table S1.21 in the manuscript; compiled from:
+#' \itemize{
+#'   \item DAVID Bioinformatics Resources 6.8 (\url{https://david.ncifcrf.gov/})
+#'   \item Open Targets Platform (accessed Feb 2020, \url{https://platform.opentargets.org/})
+#'   \item denovo-db v1.6.1 (\url{https://denovo-db.gs.washington.edu/})
+#' }
+#' @examples
+#' data(psychiatric_annotations)
+#' head(psychiatric_annotations[, 1:6])
+"psychiatric_annotations"

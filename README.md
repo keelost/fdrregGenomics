@@ -35,7 +35,8 @@ Regression (FDRreg). It supports three genomic analysis levels:
   complex signal models, and mixture effect distributions
 - **Evaluation utilities**: Functions for FDR control and variable selection
   performance assessment
-
+- **Built-in Curated Annotations**: 23 biological features across 19,503 human genes (`data(psychiatric_annotations)`)
+- **Custom Annotation Pipeline**: Helper functions (`prepare_custom_annotations()`, `load_builtin_annotations()`) to easily update/supply custom annotations for independent GWAS
 ## Installation
 
 ```r
