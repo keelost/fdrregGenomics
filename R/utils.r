@@ -78,21 +78,27 @@ align_annotations <- function(target_ids, annotations, id_col,
   if (is.null(annot_id_col)) annot_id_col <- id_col
 
   if (!annot_id_col %in% colnames(annotations)) {
-    # Case-insensitive fallback
+    # 1. Case-insensitive fallback
     lower_cols   <- tolower(colnames(annotations))
     lower_target <- tolower(annot_id_col)
     idx <- which(lower_cols == lower_target)
     if (length(idx) > 0) {
       annot_id_col <- colnames(annotations)[idx[1]]
-      message(sprintf(
-        "[align_annotations] Annotation ID column '%s' not found; using '%s' (case-insensitive match).",
-        id_col, annot_id_col
-      ))
     } else {
-      stop(sprintf(
-        "Annotation ID column '%s' not found.\nAvailable columns: %s",
-        annot_id_col, paste(colnames(annotations), collapse = ", ")
-      ), call. = FALSE)
+      # 2. Common biological ID aliases fallback (ID, GENE, gene, ENSEMBL, snpid, SNP, rsid, id)
+      candidate_aliases <- c("ID", "id", "GENE", "gene", "Gene", "snpid", "SNP", "snp", "rsid", "RSID", "ENSEMBL", "ENSEMBL_GENE_ID")
+      alias_match <- intersect(candidate_aliases, colnames(annotations))
+      if (length(alias_match) > 0) {
+        annot_id_col <- alias_match[1]
+        message(sprintf(
+          "[align_annotations] Using '%s' as annotation ID column.", annot_id_col
+        ))
+      } else {
+        stop(sprintf(
+          "Annotation ID column '%s' not found.\nAvailable columns: %s",
+          annot_id_col, paste(colnames(annotations), collapse = ", ")
+        ), call. = FALSE)
+      }
     }
   }
 
