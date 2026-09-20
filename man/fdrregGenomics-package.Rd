@@ -9,11 +9,12 @@
 A comprehensive pipeline for integrating GWAS summary statistics
 with biological annotations using False Discovery Rate Regression (FDRreg).
 }
-\section{Disclaimer / Attribution}{
+\section{Method & Attribution}{
 
-The underlying FDRreg algorithm is developed by Scott et al. (2016);
-this package provides the comprehensive genomics integration,
-preprocessing, and validation workflow.
+`fdrregGenomics` builds upon the foundational FDR regression framework
+developed by Scott et al. (2016), providing an end-to-end genomic workflow
+with sample-overlap decorrelation, multi-tier analysis, biological feature
+integration, and validation utilities.
 }
 
 \references{

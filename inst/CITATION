@@ -3,5 +3,5 @@ bibentry(
   title    = "fdrregGenomics: Genomics-Integrated False Discovery Rate Regression Pipeline",
   author   = person("Jinghong", "Qiu"),
   year     = "2026",
-  note     = "The underlying FDRreg algorithm by Scott et al. (2016, JASA)"
+  note     = "Extending FDR regression (Scott et al., 2016, JASA) for multi-tier genomics"
 )

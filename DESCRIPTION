@@ -9,7 +9,7 @@ Description: A comprehensive pipeline for integrating GWAS summary statistics
     with biological annotations using False Discovery Rate Regression (FDRreg).
     Supports SNP-level, MAGMA gene-level, and TWAS (S-PrediXcan / S-MultiXcan)
     analyses with optional sample-overlap decorrelation and variable selection.
-    The underlying FDRreg algorithm is developed by Scott et al. (2016, JASA).
+    Extends the foundational FDR regression framework (Scott et al., 2016, JASA) for multi-tier genomics.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:

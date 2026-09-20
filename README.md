@@ -2,11 +2,9 @@
 
 Genomics-Integrated False Discovery Rate Regression Pipeline
 
-## Disclaimer / Attribution
+## Method & Attribution
 
-> **The underlying FDRreg algorithm is developed by Scott et al. (2016,
-> JASA); this package provides the comprehensive genomics integration,
-> preprocessing, and validation workflow.**
+`fdrregGenomics` builds upon the foundational FDR regression framework developed by Scott et al. (2016, *JASA*), providing an end-to-end genomic workflow with sample-overlap decorrelation, multi-tier analysis, biological feature integration, and validation utilities.
 
 ## Overview
 
