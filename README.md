@@ -128,6 +128,7 @@ result_magma <- run_fdrreg_magma_gene(
   seed        = 42
 )
 summary(result_magma)
+```
 
 ### Advanced Example (New Simulation Modes)
 
