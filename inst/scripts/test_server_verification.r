@@ -114,6 +114,7 @@ sim$magma_target$GENE <- real_gene_ids
 for (nm in names(sim$magma_aux)) {
   sim$magma_aux[[nm]]$GENE <- real_gene_ids
 }
+res_magma <- run_fdrreg_magma_gene(
   target          = sim$magma_target,
   aux             = sim$magma_aux,
   annotations     = annot_entrez,
