@@ -108,9 +108,12 @@ cat(sprintf("      -> Model fit status: %s (Theoretical discoveries: %d)\n",
 
 # Tier 2: MAGMA Gene Level (with Built-in Curated Annotations + LASSO)
 cat("  6.2 Testing Tier 2: MAGMA Gene Level (Curated bio annotations)...\n")
-# Ensure simulated gene IDs match annotation IDs for demonstration
-sim$magma_target$GENE <- annot_entrez$ID[1:nrow(sim$magma_target)]
-res_magma <- run_fdrreg_magma_gene(
+# Ensure simulated gene IDs match across target and aux
+real_gene_ids <- as.character(annot_entrez$ID[1:nrow(sim$magma_target)])
+sim$magma_target$GENE <- real_gene_ids
+for (nm in names(sim$magma_aux)) {
+  sim$magma_aux[[nm]]$GENE <- real_gene_ids
+}
   target          = sim$magma_target,
   aux             = sim$magma_aux,
   annotations     = annot_entrez,
@@ -126,7 +129,11 @@ cat(sprintf("      -> Model fit status: %s (Theoretical discoveries: %d)\n",
 
 # Tier 3: TWAS Level (S-PrediXcan + Ensembl Curated Annotations)
 cat("  6.3 Testing Tier 3: TWAS Level (S-PrediXcan)...\n")
-sim$spredixcan_target$gene <- annot_ensembl$ENSEMBL_GENE_ID[1:nrow(sim$spredixcan_target)]
+real_ens_ids <- as.character(annot_ensembl$ENSEMBL_GENE_ID[1:nrow(sim$spredixcan_target)])
+sim$spredixcan_target$gene <- real_ens_ids
+for (nm in names(sim$spredixcan_aux)) {
+  sim$spredixcan_aux[[nm]]$gene <- real_ens_ids
+}
 res_twas <- run_fdrreg_twas(
   target          = sim$spredixcan_target,
   twas_type       = "spredixcan",
