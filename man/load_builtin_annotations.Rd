@@ -2,20 +2,48 @@
 % Please edit documentation in R/annotations.r
 \name{load_builtin_annotations}
 \alias{load_builtin_annotations}
-\title{Load Built-in Curated Psychiatric Annotations}
+\title{Load Built-in Curated or Freshly Scored Biological Annotations}
 \usage{
-load_builtin_annotations(key_type = c("entrez", "ensembl", "symbol"))
+load_builtin_annotations(
+  key_type = c("entrez", "ensembl", "symbol"),
+  version = c("curated", "raw_scored"),
+  raw_df = NULL,
+  col_mapping = list(tissue = "tissue", disease = "disease", pathway = "pathway",
+    tfbs = "tfbs_count", process = "process", interaction = "interaction")
+)
 }
 \arguments{
 \item{key_type}{Character, identifier column to use: "entrez" (ID), "ensembl" (ENSEMBL_GENE_ID), or "symbol" (GeneName).}
+
+\item{version}{Character, either \code{"curated"} (default, the validated benchmark matrix used in the manuscript)
+or \code{"raw_scored"} (when \code{raw_df} is supplied, recalculates using deterministic scoring rules).}
+
+\item{raw_df}{Optional data frame containing raw DAVID query outputs. Only used if \code{version = "raw_scored"}.}
+
+\item{col_mapping}{Optional named list mapping column names in \code{raw_df} when \code{version = "raw_scored"}.}
 }
 \value{
-A data frame containing gene identifiers and 21 biological annotation columns.
+A data frame containing gene identifiers and biological annotation columns.
 }
 \description{
-Retrieves the frozen annotation matrix provided in Supplementary Table S1.21.
+Retrieves either the frozen curated benchmark annotation matrix (Supplementary Table S1.21)
+or allows building fresh scores using automated deterministic rules from raw database queries.
 }
 \examples{
-annot <- load_builtin_annotations("entrez")
-head(annot[, 1:5])
+# Option 1: Load the benchmark curated frozen matrix (Default)
+annot_curated <- load_builtin_annotations("entrez", version = "curated")
+head(annot_curated[, 1:5])
+
+# Option 2: Score raw database query table using reproducible rules
+raw_toy <- data.frame(
+  ID = c("1", "2"),
+  tissue = c("Fetal brain, cortex", "Liver"),
+  disease = c("Schizophrenia", "None"),
+  pathway = c("Dopaminergic synapse", NA),
+  tfbs_count = c(3, 0),
+  process = c("Synaptic transmission", NA),
+  interaction = c("Dopamine receptor binding", NA)
+)
+annot_fresh <- load_builtin_annotations("entrez", version = "raw_scored", raw_df = raw_toy)
+head(annot_fresh)
 }

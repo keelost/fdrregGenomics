@@ -2,18 +2,60 @@
 # R/annotations.R — User-customizable annotation helpers and loader
 # ===========================================================================
 
-#' Load Built-in Curated Psychiatric Annotations
+#' Load Built-in Curated or Freshly Scored Biological Annotations
 #'
-#' Retrieves the frozen annotation matrix provided in Supplementary Table S1.21.
+#' Retrieves either the frozen curated benchmark annotation matrix (Supplementary Table S1.21)
+#' or allows building fresh scores using automated deterministic rules from raw database queries.
 #'
 #' @param key_type Character, identifier column to use: "entrez" (ID), "ensembl" (ENSEMBL_GENE_ID), or "symbol" (GeneName).
-#' @return A data frame containing gene identifiers and 21 biological annotation columns.
+#' @param version Character, either \code{"curated"} (default, the validated benchmark matrix used in the manuscript)
+#'   or \code{"raw_scored"} (when \code{raw_df} is supplied, recalculates using deterministic scoring rules).
+#' @param raw_df Optional data frame containing raw DAVID query outputs. Only used if \code{version = "raw_scored"}.
+#' @param col_mapping Optional named list mapping column names in \code{raw_df} when \code{version = "raw_scored"}.
+#' @return A data frame containing gene identifiers and biological annotation columns.
 #' @export
 #' @examples
-#' annot <- load_builtin_annotations("entrez")
-#' head(annot[, 1:5])
-load_builtin_annotations <- function(key_type = c("entrez", "ensembl", "symbol")) {
+#' # Option 1: Load the benchmark curated frozen matrix (Default)
+#' annot_curated <- load_builtin_annotations("entrez", version = "curated")
+#' head(annot_curated[, 1:5])
+#'
+#' # Option 2: Score raw database query table using reproducible rules
+#' raw_toy <- data.frame(
+#'   ID = c("1", "2"),
+#'   tissue = c("Fetal brain, cortex", "Liver"),
+#'   disease = c("Schizophrenia", "None"),
+#'   pathway = c("Dopaminergic synapse", NA),
+#'   tfbs_count = c(3, 0),
+#'   process = c("Synaptic transmission", NA),
+#'   interaction = c("Dopamine receptor binding", NA)
+#' )
+#' annot_fresh <- load_builtin_annotations("entrez", version = "raw_scored", raw_df = raw_toy)
+#' head(annot_fresh)
+load_builtin_annotations <- function(key_type = c("entrez", "ensembl", "symbol"),
+                                     version = c("curated", "raw_scored"),
+                                     raw_df = NULL,
+                                     col_mapping = list(
+                                       tissue = "tissue",
+                                       disease = "disease",
+                                       pathway = "pathway",
+                                       tfbs = "tfbs_count",
+                                       process = "process",
+                                       interaction = "interaction"
+                                     )) {
   key_type <- match.arg(key_type)
+  version  <- match.arg(version)
+
+  if (version == "raw_scored") {
+    if (is.null(raw_df)) {
+      stop("When version = 'raw_scored', 'raw_df' containing raw database queries must be provided.", call. = FALSE)
+    }
+    id_name <- if (key_type == "entrez") "ID" else if (key_type == "ensembl") "ENSEMBL_GENE_ID" else "GeneName"
+    if (!id_name %in% colnames(raw_df)) {
+      stop(sprintf("Identifier column '%s' required for key_type = '%s' in raw_df.", id_name, key_type), call. = FALSE)
+    }
+    return(score_david_annotations(raw_df, id_col = id_name, col_mapping = col_mapping))
+  }
+
   utils::data("psychiatric_annotations", package = "fdrregGenomics", envir = environment())
   df <- get("psychiatric_annotations", envir = environment())
   

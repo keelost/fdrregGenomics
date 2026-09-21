@@ -75,30 +75,41 @@ nrow(sig)
 
 ### Working with Biological Annotations
 
-#### 1. Loading Built-in Curated Annotations
+#### 1. Loading Biological Annotations (Curated vs. Freshly Scored)
 
-The package provides the full frozen biological annotation matrix comprising 23 features across 19,503 human genes (Supplementary Table S1.21). You can retrieve it keyed by different identifiers:
+Users have two flexible options for biological annotations:
+
+- **Option A (Default: Curated Benchmark)**: Load the validated benchmark matrix of 23 biological features across 19,503 human genes (Supplementary Table S1.21).
+- **Option B (Automated Fresh Scoring)**: Provide raw database query outputs (e.g., from DAVID 6.8, OMIM, or Reactome) and transform them into the 6 deterministic tiered and binary numerical covariates (`expre.brain`, `dise.brain`, `pathway.brain`, `tfbs`, `bio.brain`, `bio.inter`) using exact substring matching rules.
 
 ```r
 library(fdrregGenomics)
 
-# Load annotations keyed by Entrez ID (ideal for MAGMA gene-level analysis)
-annot_entrez <- load_builtin_annotations(key_type = "entrez")
-head(annot_entrez[, 1:5])
+# --- Option A: Load Curated Benchmark Annotations ---
+# Keyed by Entrez ID (ideal for MAGMA gene-level analysis)
+annot_entrez <- load_builtin_annotations(key_type = "entrez", version = "curated")
 
-# Load annotations keyed by Ensembl ID (ideal for S-PrediXcan / S-MultiXcan TWAS)
-annot_ensembl <- load_builtin_annotations(key_type = "ensembl")
-head(annot_ensembl[, 1:5])
+# Keyed by Ensembl ID (ideal for S-PrediXcan / S-MultiXcan TWAS)
+annot_ensembl <- load_builtin_annotations(key_type = "ensembl", version = "curated")
 
-# Load annotations keyed by HGNC Gene Symbol
-annot_symbol <- load_builtin_annotations(key_type = "symbol")
-head(annot_symbol[, 1:5])
+# Keyed by HGNC Gene Symbol
+annot_symbol <- load_builtin_annotations(key_type = "symbol", version = "curated")
 
-# Directly access the raw dataset and its comprehensive Data Dictionary
-data(psychiatric_annotations)
-?psychiatric_annotations
+# --- Option B: Compute Scores from Raw Database Query Tables ---
+raw_david_df <- data.frame(
+  ID = c("1001", "1002"),
+  tissue = c("Fetal brain, cortex", "Liver"),
+  disease = c("Schizophrenia, Bipolar", "Hypertension"),
+  pathway = c("Dopaminergic synapse", "Glycolysis"),
+  tfbs_count = c(5, 0),
+  process = c("Synaptic transmission", "Cell cycle"),
+  interaction = c("Dopamine receptor binding", "Insulin binding")
+)
+
+# Automated deterministic scoring
+annot_scored <- score_david_annotations(raw_david_df, id_col = "ID")
+head(annot_scored)
 ```
-
 #### 2. Using Custom / Updated Annotations in Independent GWAS
 
 Users can easily supply custom annotations (e.g., cell-type eQTLs, ChIP-seq binding, or updated databases) and merge them with baseline annotations or use them standalone:
